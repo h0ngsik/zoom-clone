@@ -1,3 +1,5 @@
+import http from "http";
+import WebSocket from "ws";
 import express from "express";
 
 const app = express();
@@ -14,5 +16,11 @@ app.get("/*", (req, res) => res.redirect("/"));
 
 const handleListen = () => console.log("Listening on http://localhost:3000");
 
-// 3000번 포트로 서버 실행
-app.listen(3000, handleListen);
+const server = http.createServer(app);
+// ws, http를 하나의 서버에서 작동할 수 있다. (꼭 함께 사용할 필요는 없음.)
+const wss = new WebSocket.Server({ server });
+
+// app.listen(3000, handleListen)
+
+// http 서버 위에 ws 서비스도 함께 제공.
+server.listen(3000, handleListen);
