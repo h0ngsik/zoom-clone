@@ -1,42 +1,78 @@
-// 프론트엔드에서 socket은 서버와의 연결을 의미
-const messageList = document.querySelector("ul");
-const messageForm = document.querySelector("#message");
-const nicknameForm = document.querySelector("#nickname");
-const socket = new WebSocket(`ws://${window.location.host}`);
+const socket = io();
 
-const makeMessage = (type, payload) => {
-  const msg = { type, payload };
-  return JSON.stringify(msg);
-};
+const welcome = document.getElementById("welcome");
+const form = welcome.querySelector("form");
+const room = document.getElementById("room");
 
-socket.addEventListener("open", () => {
-  console.log("Connected to Server !");
-});
+room.hidden = true;
+let roomName = "";
 
-socket.addEventListener("message", (message) => {
-  console.log("new message:", message.data);
-  const li = document.createElement("li");
-  li.innerText = message.data;
-  messageList.append(li);
-});
-
-socket.addEventListener("close", () => {
-  console.log("disconnected from Server !");
-});
-
-const handleSubmit = (event) => {
+const handleMessageSubmit = (event) => {
   event.preventDefault();
-  const input = messageForm.querySelector("input");
-  socket.send(makeMessage("new_message", input.value));
-  input.value = "";
+  const input = room.querySelector("#message input");
+  const value = input.value;
+  socket.emit("new_message", value, roomName, () => {
+    addMessage(`나: ${value}`);
+  });
 };
 
 const handleNicknameSubmit = (event) => {
   event.preventDefault();
-  const input = nicknameForm.querySelector("input");
-  socket.send(makeMessage("nickname", input.value));
+  const input = room.querySelector("#nickname input");
+  const value = input.value;
+  socket.emit("nickname", value);
+};
+
+const showRoom = () => {
+  welcome.hidden = true;
+  room.hidden = false;
+
+  const h3 = room.querySelector("h3");
+  h3.innerText = `Room ${roomName}`;
+
+  const messageForm = room.querySelector("#message");
+  const nicknameForm = room.querySelector("#nickname");
+  messageForm.addEventListener("submit", handleMessageSubmit);
+  nicknameForm.addEventListener("submit", handleNicknameSubmit);
+};
+
+const addMessage = (message) => {
+  const ul = room.querySelector("ul");
+  const li = document.createElement("li");
+  li.innerText = message;
+  ul.appendChild(li);
+};
+
+const handleRoomSubmit = (event) => {
+  event.preventDefault();
+  const input = form.querySelector("input");
+  socket.emit("enter_room", input.value, showRoom);
+  roomName = input.value;
   input.value = "";
 };
 
-messageForm.addEventListener("submit", handleSubmit);
-nicknameForm.addEventListener("submit", handleNicknameSubmit);
+form.addEventListener("submit", handleRoomSubmit);
+
+socket.on("welcome", (user) => {
+  addMessage(`${user}님이 방에 입장하셨습니다.`);
+});
+
+socket.on("bye", (left) => {
+  addMessage(`${left}님이 방에서 퇴장했습니다.`);
+});
+
+// socket.on("new_message", (msg) => addMessage(msg));
+socket.on("new_message", addMessage);
+
+socket.on("room_change", (rooms) => {
+  const roomList = welcome.querySelector("ul");
+  roomList.innerHTML = "";
+  if (rooms.length === 0) {
+    return;
+  }
+  rooms.forEach((room) => {
+    const li = document.createElement("li");
+    li.innerHTML = room;
+    roomList.appendChild(li);
+  });
+});
