@@ -44,14 +44,15 @@ const countRoom = (roomName) => {
 };
 
 wsServer.on("connection", (socket) => {
-  // console.log(socket);
+  console.log(socket.rooms);
   socket["nickname"] = "Anonymous";
 
   socket.on("enter_room", (roomName, done) => {
     socket.join(roomName);
     done();
     socket.to(roomName).emit("welcome", socket.nickname, countRoom(roomName));
-    wsServer.sockets.emit("room_change", publicRooms());
+    wsServer.sockets.emit("room_change", publicRooms(), countRoom(roomName));
+    console.log(socket.rooms);
   });
 
   socket.on("disconnecting", () => {

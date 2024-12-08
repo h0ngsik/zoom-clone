@@ -68,7 +68,7 @@ socket.on("bye", (left, newCount) => {
 // socket.on("new_message", (msg) => addMessage(msg));
 socket.on("new_message", addMessage);
 
-socket.on("room_change", (rooms) => {
+socket.on("room_change", (rooms, newCount) => {
   const roomList = welcome.querySelector("ul");
   roomList.innerHTML = "";
   if (rooms.length === 0) {
@@ -76,7 +76,7 @@ socket.on("room_change", (rooms) => {
   }
   rooms.forEach((room) => {
     const li = document.createElement("li");
-    li.innerHTML = room;
+    li.innerHTML = `방 이름:${room}, 인원:${newCount}`;
     roomList.appendChild(li);
   });
 });
